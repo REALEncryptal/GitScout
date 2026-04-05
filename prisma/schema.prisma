@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime? @map("email_verified")
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  githubProfile    GitHubProfile?
+  developerProfile DeveloperProfile?
+  scoutingRuns     ScoutingRun[]
+  recommendations  Recommendation[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model GitHubProfile {
+  id             String   @id @default(cuid())
+  userId         String   @unique @map("user_id")
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  username       String
+  repositories   Json
+  languages      Json
+  commitPatterns Json     @map("commit_patterns")
+  pullRequests   Json     @map("pull_requests")
+  topTopics      String[] @map("top_topics")
+  totalStars     Int      @default(0) @map("total_stars")
+  totalForks     Int      @default(0) @map("total_forks")
+  publicRepoCount Int     @default(0) @map("public_repo_count")
+  accountAge     Float    @default(0) @map("account_age")
+  fetchedAt      DateTime @default(now()) @map("fetched_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("github_profiles")
+}
+
+model DeveloperProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profile     Json
+  modelUsed   String   @map("model_used")
+  durationMs  Int      @default(0) @map("duration_ms")
+  generatedAt DateTime @default(now()) @map("generated_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("developer_profiles")
+}
+
+model ScoutingRun {
+  id             String          @id @default(cuid())
+  userId         String          @map("user_id")
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status         String          @default("pending") // pending, running, completed, failed
+  queriesUsed    String[]        @map("queries_used")
+  reposScanned   Int             @default(0) @map("repos_scanned")
+  modelUsed      String?         @map("model_used")
+  durationMs     Int?            @map("duration_ms")
+  error          String?
+  candidateRepos CandidateRepo[]
+  startedAt      DateTime?       @map("started_at")
+  completedAt    DateTime?       @map("completed_at")
+  createdAt      DateTime        @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@map("scouting_runs")
+}
+
+model CandidateRepo {
+  id            String      @id @default(cuid())
+  scoutingRunId String      @map("scouting_run_id")
+  scoutingRun   ScoutingRun @relation(fields: [scoutingRunId], references: [id], onDelete: Cascade)
+  repoFullName  String      @map("repo_full_name")
+  url           String
+  matchScore    Int         @map("match_score")
+  matchData     Json        @map("match_data")
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  @@index([scoutingRunId, matchScore])
+  @@map("candidate_repos")
+}
+
+model Recommendation {
+  id            String   @id @default(cuid())
+  userId        String   @map("user_id")
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scoutingRunId String   @map("scouting_run_id")
+  repoFullName  String   @map("repo_full_name")
+  data          Json
+  status        String   @default("new") // new, viewed, saved, dismissed, applied
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([userId, status])
+  @@index([userId, createdAt])
+  @@map("recommendations")
+}
