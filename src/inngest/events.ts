@@ -3,10 +3,10 @@ export type Events = {
     data: { userId: string };
   };
   "github/sync.completed": {
-    data: { userId: string; githubProfileId: string };
+    data: { userId: string; githubProfileId: string; scoutingRunId?: string };
   };
   "profile/analyzed": {
-    data: { userId: string; developerProfileId: string };
+    data: { userId: string; developerProfileId: string; scoutingRunId?: string };
   };
   "repos/scouted": {
     data: { userId: string; scoutingRunId: string };

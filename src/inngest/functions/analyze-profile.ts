@@ -9,8 +9,8 @@ export const analyzeProfileFn = inngest.createFunction(
     retries: 3,
     triggers: [{ event: "github/sync.completed" }],
   },
-  async ({ event, step }: { event: { data: { userId: string } }; step: any }) => {
-    const { userId } = event.data;
+  async ({ event, step }: { event: { data: { userId: string; scoutingRunId?: string } }; step: any }) => {
+    const { userId, scoutingRunId } = event.data;
 
     const githubProfile = await step.run("load-github-profile", async () => {
       const profile = await db.gitHubProfile.findUnique({ where: { userId } });
@@ -54,7 +54,7 @@ export const analyzeProfileFn = inngest.createFunction(
 
     await step.sendEvent("trigger-scout", {
       name: "profile/analyzed",
-      data: { userId, developerProfileId: devProfile.id },
+      data: { userId, developerProfileId: devProfile.id, scoutingRunId },
     });
 
     return { success: true, modelUsed: result.modelUsed };

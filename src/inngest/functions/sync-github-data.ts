@@ -12,6 +12,13 @@ export const syncGitHubData = inngest.createFunction(
   async ({ event, step }: { event: { data: { userId: string } }; step: any }) => {
     const { userId } = event.data;
 
+    // Create a scouting run immediately so the UI can track pipeline progress
+    const run = await step.run("create-scouting-run", async () => {
+      return db.scoutingRun.create({
+        data: { userId, status: "pending", startedAt: new Date() },
+      });
+    });
+
     const account = await step.run("get-access-token", async () => {
       const acc = await db.account.findFirst({
         where: { userId, provider: "github" },
@@ -65,7 +72,7 @@ export const syncGitHubData = inngest.createFunction(
 
     await step.sendEvent("trigger-analyze", {
       name: "github/sync.completed",
-      data: { userId, githubProfileId: githubProfile.id },
+      data: { userId, githubProfileId: githubProfile.id, scoutingRunId: run.id },
     });
 
     return { success: true, username, repoCount: profileData.repositories.length };

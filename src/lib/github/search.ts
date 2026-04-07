@@ -69,17 +69,29 @@ export async function getRepoIssues(
   }));
 }
 
+export interface FilterOptions {
+  minStars?: number;
+  excludedRepos?: string[];
+  excludedTopics?: string[];
+}
+
 export function filterCandidates(
   repos: SearchRepoResult[],
   username: string,
-  options: { minStars?: number } = {}
+  options: FilterOptions = {}
 ): SearchRepoResult[] {
-  const { minStars = 10 } = options;
+  const { minStars = 10, excludedRepos = [], excludedTopics = [] } = options;
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const excludedSet = new Set(excludedRepos.map((r) => r.toLowerCase()));
+  const excludedTopicSet = new Set(excludedTopics.map((t) => t.toLowerCase()));
 
   return repos.filter((repo) => {
     // Exclude user's own repos
     if (repo.owner.toLowerCase() === username.toLowerCase()) return false;
+    // Exclude explicitly excluded repos
+    if (excludedSet.has(repo.fullName.toLowerCase())) return false;
+    // Exclude repos with excluded topics
+    if (repo.topics.some((t) => excludedTopicSet.has(t.toLowerCase()))) return false;
     // Exclude repos with too few stars
     if (repo.stars < minStars) return false;
     // Exclude inactive repos (not updated in 30 days)

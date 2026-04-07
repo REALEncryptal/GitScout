@@ -87,6 +87,9 @@ vi.mock("@/lib/db", () => ({
         { id: "user-2" },
       ]),
     },
+    userSettings: {
+      findUnique: vi.fn().mockResolvedValue(null),
+    },
   },
 }));
 

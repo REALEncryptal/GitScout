@@ -8,6 +8,10 @@ const envSchema = z.object({
   AUTH_URL: z.url().optional(),
   OPENAI_API_KEY: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
+  OPENROUTER_API_KEY: z.string().optional(),
+  DEFAULT_MODEL: z.string().optional(),
+  INNGEST_EVENT_KEY: z.string().optional(),
+  INNGEST_SIGNING_KEY: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

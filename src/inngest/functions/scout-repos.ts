@@ -9,23 +9,25 @@ export const scoutReposFn = inngest.createFunction(
     retries: 3,
     triggers: [{ event: "profile/analyzed" }],
   },
-  async ({ event, step }: { event: { data: { userId: string } }; step: any }) => {
-    const { userId } = event.data;
+  async ({ event, step }: { event: { data: { userId: string; scoutingRunId?: string } }; step: any }) => {
+    const { userId, scoutingRunId } = event.data;
 
-    const { profile, accessToken, username } = await step.run(
+    const { profile, accessToken, username, settings } = await step.run(
       "load-profile-and-token",
       async () => {
-        const [devProfile, account, ghProfile] = await Promise.all([
-          db.developerProfile.findUnique({ where: { userId } }),
-          db.account.findFirst({
-            where: { userId, provider: "github" },
-            select: { access_token: true },
-          }),
-          db.gitHubProfile.findUnique({
-            where: { userId },
-            select: { username: true },
-          }),
-        ]);
+        const [devProfile, account, ghProfile, userSettings] =
+          await Promise.all([
+            db.developerProfile.findUnique({ where: { userId } }),
+            db.account.findFirst({
+              where: { userId, provider: "github" },
+              select: { access_token: true },
+            }),
+            db.gitHubProfile.findUnique({
+              where: { userId },
+              select: { username: true },
+            }),
+            db.userSettings.findUnique({ where: { userId } }),
+          ]);
 
         if (!devProfile) throw new Error("Developer profile not found");
         if (!account?.access_token) throw new Error("No GitHub account linked");
@@ -35,18 +37,35 @@ export const scoutReposFn = inngest.createFunction(
           profile: devProfile.profile as unknown as DeveloperProfile,
           accessToken: account.access_token,
           username: ghProfile.username,
+          settings: userSettings
+            ? {
+                minStars: userSettings.minStars,
+                excludedRepos: userSettings.excludedRepos,
+                excludedTopics: userSettings.excludedTopics,
+              }
+            : undefined,
         };
       }
     );
 
-    const run = await step.run("create-scouting-run", async () => {
+    // Use existing scouting run (created at pipeline start) or create one
+    const run = await step.run("get-or-create-scouting-run", async () => {
+      if (scoutingRunId) {
+        const existing = await db.scoutingRun.update({
+          where: { id: scoutingRunId },
+          data: { status: "running" },
+        });
+        return existing;
+      }
       return db.scoutingRun.create({
         data: { userId, status: "running", startedAt: new Date() },
       });
     });
 
     const result = await step.run("run-repo-scout", async () => {
-      return scoutRepos(profile, accessToken, username);
+      return scoutRepos(profile, accessToken, username, {
+        filterOptions: settings,
+      });
     });
 
     await step.run("save-scouting-results", async () => {

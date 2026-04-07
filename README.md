@@ -10,7 +10,7 @@ Your personal open-source talent agent. GitScout analyzes your GitHub history to
 
 ## Tech Stack
 
-- **Framework**: [Next.js 15](https://nextjs.org/) (App Router)
+- **Framework**: [Next.js 16](https://nextjs.org/) (App Router)
 - **AI**: [Vercel AI SDK](https://sdk.vercel.ai/) (provider-agnostic - supports OpenAI & Anthropic)
 - **Auth**: [Auth.js v5](https://authjs.dev/) with GitHub OAuth
 - **Database**: PostgreSQL with [Prisma](https://www.prisma.io/)

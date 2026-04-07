@@ -19,6 +19,8 @@ model User {
   developerProfile DeveloperProfile?
   scoutingRuns     ScoutingRun[]
   recommendations  Recommendation[]
+  settings         UserSettings?
+  credits          Int               @default(10)
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
 
@@ -145,4 +147,20 @@ model Recommendation {
   @@index([userId, status])
   @@index([userId, createdAt])
   @@map("recommendations")
+}
+
+model UserSettings {
+  id                   String   @id @default(cuid())
+  userId               String   @unique @map("user_id")
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  preferredLanguages   String[] @map("preferred_languages")
+  excludedRepos        String[] @map("excluded_repos")
+  excludedTopics       String[] @map("excluded_topics")
+  minStars             Int      @default(10) @map("min_stars")
+  difficultyPreference String   @default("any") @map("difficulty_preference") // beginner-friendly, moderate, advanced, any
+  scoutFrequency       String   @default("weekly") @map("scout_frequency") // weekly, biweekly, monthly
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  @@map("user_settings")
 }

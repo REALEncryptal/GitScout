@@ -5,7 +5,7 @@ import { scoredReposSchema } from "@/lib/ai/schemas/candidate-repo";
 import type { CandidateRepo } from "@/lib/ai/schemas/candidate-repo";
 import type { DeveloperProfile } from "@/lib/ai/schemas/developer-profile";
 import { createGitHubClient } from "@/lib/github/client";
-import { filterCandidates } from "@/lib/github/search";
+import { filterCandidates, type FilterOptions } from "@/lib/github/search";
 import type { SearchRepoResult } from "@/lib/github/search";
 import {
   REPO_SCOUT_SYSTEM_PROMPT,
@@ -26,9 +26,9 @@ export async function scoutRepos(
   profile: DeveloperProfile,
   accessToken: string,
   username: string,
-  options: { maxResults?: number; modelId?: string } = {}
+  options: { maxResults?: number; modelId?: string; filterOptions?: FilterOptions } = {}
 ): Promise<ScoutResult> {
-  const { maxResults = 20, modelId } = options;
+  const { maxResults = 20, modelId, filterOptions } = options;
   const resolvedModelId = modelId ?? getModelId();
   const client = createGitHubClient(accessToken);
   const start = Date.now();
@@ -127,8 +127,8 @@ export async function scoutRepos(
     temperature: 0.5,
   });
 
-  // Filter out user's own repos and inactive ones
-  const filtered = filterCandidates(allRepos, username);
+  // Filter out user's own repos, inactive ones, and user-excluded repos/topics
+  const filtered = filterCandidates(allRepos, username, filterOptions);
 
   // Deduplicate by fullName
   const unique = [...new Map(filtered.map((r) => [r.fullName, r])).values()];

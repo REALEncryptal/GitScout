@@ -103,6 +103,7 @@ vi.mock("ai", () => ({
 
 vi.mock("@ai-sdk/openai", () => ({
   openai: vi.fn(() => "mock-openai-model"),
+  createOpenAI: vi.fn(() => vi.fn(() => "mock-openrouter-model")),
 }));
 
 vi.mock("@ai-sdk/anthropic", () => ({
