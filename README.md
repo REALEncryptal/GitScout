@@ -1,5 +1,7 @@
 # GitScout
 
+![GitScout](docs/screenshots/landing.png)
+
 Your personal open-source talent agent. GitScout analyzes your GitHub history to understand your unique coding style and strengths, proactively scouts thousands of repositories to find active projects where your skills are needed most, and delivers curated recommendations explaining exactly why you're a great fit and how to make your first impact.
 
 ## How It Works
@@ -7,6 +9,16 @@ Your personal open-source talent agent. GitScout analyzes your GitHub history to
 1. **Analyze** - Sign in with GitHub and GitScout deep-dives into your repositories, languages, commit patterns, and contribution history to build a comprehensive developer profile.
 2. **Scout** - AI agents search thousands of active open-source repositories to find projects that match your unique skill set and contribution style.
 3. **Contribute** - Get personalized recommendations with specific issues, an explanation of why you're a great fit, and a plan for making your first contribution.
+
+## Screenshots
+
+![Dashboard while scouting is running](docs/screenshots/dashboard-scouting.png)
+
+*The dashboard mid-scout, showing the live pipeline as it analyzes your profile, scouts repositories, and generates recommendations.*
+
+![Recommendations](docs/screenshots/recommendations.png)
+
+*Curated recommendations with a fit score, why you're a match, and a concrete first contribution for each project.*
 
 ## Tech Stack
 
